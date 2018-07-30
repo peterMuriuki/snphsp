@@ -1,4 +1,6 @@
-"""The goal here is to create an implementation of the gauss elimination algorithm
+"""The goal here is to create an implementation of 
+    1. inverse_method
+    2. the gauss elimination algorithm
 for finding unkowns in a system of linear equations
 
 The solution will then hence forth be used to solve the solvit problem that happens 
@@ -12,52 +14,58 @@ E + B + F + J = 19
 D + D + E + G = 20
 F + G + A + H = 18
 """
-import unittest
+import unittest, random
+import numpy as np
+import numpy.matlib as mt
 
-class Matrix(object):
-    def __init__(self, object, columns=0,filler=0):
-        """:parameters: a list of objects, alist of lists of objects
-        a list of tuples of objects"""
-        self.data = []
-        self.rows = len(self.data)
-        self.columns = len(self.data[0])
-        
-        if isinstance(object, int) and isinstance(object, int):
-            # we have dimensions for row;
-            self.data = [[filler] * columns] * object
-        elif isinstance(object, list) or isinstance(object, tuple):
-            #first we consider the 2 dimensional matrix, columns should have the same no. of elements
-            if type(object[0][0]) == list or type(object[0][0] == tuple)
-                self.data = list(object)
-                for el in self.data:
-                    el = list(el)
-            # first we  consider a one dimensional sequence of data
-            if type(object[0][0]) == int:
-                self.data = [element for element in object if isinstance(element, int) else raise Exception("Expected int data, but got {}".format(type(element)))]
-            
-        return
+eqstring = ["B + E + D + F","A +B + D + G ","C + f + E + A",
+            "H + J + G + H","B + A + C + H","E + B + F + J ","D + D + E + G", "F + G + A + H"]
+solutions = [17, 26, 16, 18, 20, 19, 20, 18]
+eqlist = [map(str.strip, char.split("+")) for char in eqstring]
+temp = []
+for charlist in eqlist:
+    temp.extend(charlist)
+unknownset = set(temp)
+
+#issue 1: the system does not translate to a square matrix
+translated_matrix  = []
+for string in eqstring:
+    coeff = []
+    for unknown in unknownset:
+        coeff.append(string.count(unknown))
+    translated_matrix.append(coeff)
+
+# print(translated_matrix)
+
+def add_list(list1, list2):
+    if len(list1) == len(list2):
+        ans = []
+        for i in range(len(list1)):
+            ans.append(list1[i] + list2[i])
+        return ans
+    else: raise Exception()
     
-    def __repr__(self):
-        for row in self.data:
-            templ = [' '.join(row) for row in self.data]
-        return '\n'.join(templ)
-    
-    def __eq__(self, other):
-        if not isinstance(other, Matrix):
-            return False
-        if self.rows != other.rows or self.columns != other.columns:
-            return False
-        # we can now compare element by element
-    
-class MatrixTests(unittest.Testcase):
-    def setUp(self):
-        """"""
-        pass
-    
-    def tearDown(self):
-        """"""
-        pass
-    
-    def test_matrix_creation_using_row_and_column_input_as_int(self):
-        sample = Matrix(1,1,0)
-        self.assert
+def inverse_method(A, x, b):
+    """linear system format: Ax = b"""
+    #make A into a square matrix with order len(b) * len(b)
+    diff = len(x) - len(A)
+    for i in range(diff):
+        first_rand = random.randint(0, len(A) - 1)
+        second_rand = random.randint(0, len(A) - 1)
+        A.append(add_list(A[first_rand],A[second_rand]))
+        b.append(b[first_rand] + b[second_rand])
+    try:
+        inverse = np.linalg.inv(A)
+        sols = inverse * b
+        sols_dic  = {}
+        for i in range(len(sols)):
+            sols_dic[x[i]] = sols[i]
+        return sols_dic
+    except np.linalg.linalg.LinAlgError as err:
+        print("err.message") #usually singular matrix not invertible
+    return A, x, b
+
+A, x, b = inverse_method(translated_matrix, unknownset, solutions)
+x=list(x) # for debug purposes
+for i in range(len(x)):
+    print(A[i], x[i], b[i])
