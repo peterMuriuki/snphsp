@@ -73,24 +73,10 @@ def inverse_method(A, x, b):
 
 A, x, b = squarify(translated_matrix, unknownset, solutions)
 
-    
-    
-A = [   
-    [1, 0, 1, 0, 0, 1, 1, 0, 0], 
-    [1, 0, 0, 0, 1, 1, 0, 0, 1], 
-    [0, 0, 1, 0, 0, 0, 1, 1, 1], 
-    [0, 2, 0, 1, 1, 0, 0, 0, 0], 
-    [1, 1, 0, 0, 0, 0, 0, 1, 1], 
-    [1, 0, 1, 1, 0, 0, 1, 0, 0], 
-    [0, 0, 0, 0, 1, 2, 1, 0, 0], 
-    [0, 1, 1, 0, 1, 0, 0, 0, 1],
-    [1, 2, 1, 0, 1, 0, 0, 1, 2]
-]
-b = [17, 26, 16, 18, 20, 19, 20, 18, 38]
-
 #Gaussian eliminations
 def gauss(A, x, b):
     #reducing to row echelon format
+    x = list(x)
     try:
         n , m = len(A), len(A[0])
     except IndexError:
@@ -132,7 +118,9 @@ def gauss(A, x, b):
             rows += 1
             for i in range(len(A)):
                 print(str([float(j) for j in A[i]]), end="\t")
+#                 print(x[i], end="\t")
                 print(str(b[i]))
+                print(x)
             print("*" * 100)
 
 gauss(A, [], b)
@@ -144,8 +132,35 @@ def prettify_to_file(A,b):
     return
 prettify_to_file(A, b)
 
-"""Back substitution"""
-# seems like the puzzle leaves 2 variables to be guessed- for this we have no other choice but brute force
+def back_substitution(A, x, b):
+    """Back substitution"""
+    # seems like the puzzle leaves 2 variables to be guessed- for this we have no other choice but brute force
+    #populate dict with unkowns and initialize with zero
+    d = {}
+    for _x in list(x):
+        d[_x] = 0
+    while d[x[len(x) -2]] < 10:
+        while d[x[len(x) -1]] < 10:
+            if d[x[len(x) - 2]] != d[x[len(x) - 1]]:
+                for row in range(len(A) - 1, 0):
+                    #find the last pivot: will be the first non zero value in current row
+                    def pivot(A):
+                        for index in enumerate(A[len(A) - 1]):
+                            if val != 0:
+                                return value, index
+                    pivvalue, pivindex = pivot(A)
+                    total = 0
+                    for i in range(len(x)):
+                        if i != pivindex:
+                            total = A[row][i] * d[x[i]]
+                    temp = (b[pivindex] - total)/pivvalue
+                    if temp > 10:
+                        d[x[len[x] - 1]] += 1
+                        continue
+                    else:
+                        d[x[pivindex]] = temp
+        d[x[len[x] - 2]] += 1
+    return d
 
 class MatrixTests(unittest.TestCase):
     def setup(self):
