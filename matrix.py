@@ -117,22 +117,9 @@ def echelon(A, x, b):
                     #subtract A[rows][column] * 1 - full rows
             columns += 1
             rows += 1
-            #******debug purposes********
-#             for i in range(len(A)):
-#                 print(str([float(j) for j in A[i]]), end="\t")
-#                 print(x[i], end="\t")
-#                 print(str(b[i]))
-#             print("*" * 100)
     return A, x, b
 
 echelon(A, x, b)
-def prettify_to_file(A,b):
-    with open('sample.txt', 'w') as file:
-        for i in range(len(A)):
-            file.write(str([float(j) for j in A[i]]))
-            file.write(str(b[i]))
-    return
-prettify_to_file(A, b)
 
 def back_substitution(A, x, b):
     """Back substitution"""
@@ -169,7 +156,7 @@ def back_substitution(A, x, b):
         for d[x[len(x) -2]] in range(1, 10):
             for d[x[len(x) -1]] in range(1, 10):
                 if d[x[len(x) - 2]] != d[x[len(x) - 1]]:
-                    for row in range(len(A) - 1, 0, -1):
+                    for row in range(len(A) - 1, -1, -1):
                         #find the last pivot: will be the first non zero value in current row
                         def pivot(A):
                             """Given a reduced row it will return first non zero"""
@@ -189,10 +176,10 @@ def back_substitution(A, x, b):
                             d[x[pivindex]] = temp
                             if pivindex == 0:
                                 check = True
-                                raise StopIterationError("Found our matches")
+                                raise StopIteration("Found our matches")
                         else:
                             break
-    except StopIterationError as err:
+    except StopIteration as err:
         pass
     if check:
         return d
@@ -240,70 +227,3 @@ class MatrixTests(unittest.TestCase):
         res = echelon(A, x, b)
         self.assertListEqual(res[0], Asol)
         self.assertListEqual(res[2], bsol)
-
-"""
-import operator
-from copy import deepcopy
-from fractions import Fraction
-A = [[1, 1, 1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 1, 0, 1, 1], 
-    [0, 1, 1, 1, 0, 1, 0, 0, 0], 
-    [0, 0, 0, 0, 2, 0, 1, 1, 0], 
-    [0, 0, 0, 1, 1, 1, 0, 0, 1], 
-    [0, 1, 1, 0, 0, 0, 1, 0, 1],
-    [2, 0, 1, 0, 0, 0, 0, 1, 0], 
-    [0, 1, 0, 0, 1, 1, 0, 1, 0]]
-b = [17, 26, 16, 18, 20, 19, 20, 18, 38]
-
-#Gaussian eliminations
-def echelon(A, x, b):
-    #reducing to row echelon format
-    try:
-        n , m = len(A), len(A[0])
-    except IndexError:
-        print("not a Matrix, seems like a vector")
-    # for a matrix A with order n x m ; n rows and m columns
-    rows, columns = 0, 0
-    while rows < n and columns < m:
-        # get the max for certain columns for all rows
-        temp = [abs(A[i][columns]) for i in range(rows, n)]
-        big_ind, big_v = max(enumerate(temp), key=operator.itemgetter(1))
-        # big_ind = np.argmax(temp) #found pivot
-        # big_value = temp[big_ind]
-        big_ind = big_ind + len(A) - len(temp)
-        big_value = A[big_ind][columns]
-        if A[big_ind][columns] == 0:
-            #no pivot, skip column
-            columns += 1
-        else:
-            #swap big_ind with current rows **** DONT FORGET ABOUT THE b ****
-            if big_ind != rows:
-                A[big_ind], A[rows] = A[rows], A[big_ind]
-                b[big_ind], b[rows] = b[rows], b[big_ind]
-            #optimize full big_ind row by dividing with big-value use fractions
-            for index in range(m):
-                A[rows][index] = Fraction(A[rows][index], big_value)
-            b[rows] = Fraction(b[rows], big_value)
-            #for all rows below pivot: and b
-            for index in range(rows+1, n):
-                fact = deepcopy(A[index][columns])
-                if A[index][columns] < 0 and A[rows][columns]*fact < 0 or A[index][columns] > 0 and A[rows][columns]*fact > 0:
-                    sign = -1
-                else:
-                    sign = 1
-                
-                if fact != 0:
-                    for idx in range(columns, m):
-                        A[index][idx] = A[index][idx] + A[rows][idx] * fact *sign
-                    b[index] = b[index] + b[rows] * fact * sign
-                    #subtract A[rows][column] * 1 - full rows
-            columns += 1
-            rows += 1
-            for i in range(len(A)):
-                print(str([float(j) for j in A[i]]), end="\t")
-                print(str(b[i]))
-            print("*" * 100)
-echelon(A, [], b)
-
-
-"""
