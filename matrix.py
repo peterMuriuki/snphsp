@@ -75,7 +75,7 @@ A, x, b = squarify(translated_matrix, unknownset, solutions)
 
 
 #Gaussian eliminations
-def gauss(A, x, b):
+def echelon(A, x, b):
     #reducing to row echelon format
     x = list(x)
     try:
@@ -86,10 +86,10 @@ def gauss(A, x, b):
     rows, columns = 0, 0
     while rows < n and columns < m:
         # get the max for certain columns for all rows
-        temp = [A[i][columns] for i in range(rows, n)]
+        temp = [abs(A[i][columns]) for i in range(rows, n)]
         big_ind = np.argmax(temp) #found pivot
-        big_value = temp[big_ind]
-        big_ind = big_ind + len(A) - len(temp) 
+        big_ind = big_ind + len(A) - len(temp)
+        big_value = A[big_ind][columns]
         if A[big_ind][columns] == 0:
             #no pivot, skip column
             columns += 1
@@ -117,13 +117,15 @@ def gauss(A, x, b):
                     #subtract A[rows][column] * 1 - full rows
             columns += 1
             rows += 1
-            for i in range(len(A)):
-                print(str([float(j) for j in A[i]]), end="\t")
-                print(x[i], end="\t")
-                print(str(b[i]))
-            print("*" * 100)
+            #******debug purposes********
+#             for i in range(len(A)):
+#                 print(str([float(j) for j in A[i]]), end="\t")
+#                 print(x[i], end="\t")
+#                 print(str(b[i]))
+#             print("*" * 100)
+    return A, x, b
 
-gauss(A, x, b)
+echelon(A, x, b)
 def prettify_to_file(A,b):
     with open('sample.txt', 'w') as file:
         for i in range(len(A)):
@@ -135,32 +137,32 @@ prettify_to_file(A, b)
 def back_substitution(A, x, b):
     """Back substitution"""
     # seems like the puzzle leaves 2 variables to be guessed- for this we have no other choice but brute force
-    #populate dict with unkowns and initialize with zero
+    # populate dict with unkowns and initialize with zero
     d = {}
     for _x in list(x):
         d[_x] = 0
     cset_dict = {} # dict to preserve the state for corr last check
     
     def corr(key, iter1, iter2):
-    #key is between 0 and 10 excluding both
-    _in = key < 10 and key > 0
-    if not _in:
-        return False
-    #key is int and not float
-    _int = Fraction(key, 1).denominator == 1
-    if not _int:
-        return False
-    #key is not the same for the current iterations
-    if cset_dict.get((iter1, iter2)) is not None:
-        #means that we have already started recording for this iter
-        _found = key in cset_dict[(iter1, iter2)]
-        if not _found:
+        #key is between 0 and 10 excluding both
+        _in = key < 10 and key > 0
+        if not _in:
+            return False
+        #key is int and not float
+        _int = Fraction(key, 1).denominator == 1
+        if not _int:
+            return False
+        #key is not the same for the current iterations
+        if cset_dict.get((iter1, iter2)) is not None:
+            #means that we have already started recording for this iter
+            _found = key in cset_dict[(iter1, iter2)]
+            if not _found:
+                cset_dict[(iter1, iter2)].add(key)
+        else:
+            cset_dict[(iter1, iter2)] = set()
             cset_dict[(iter1, iter2)].add(key)
-    else:
-        cset_dict[(iter1, iter2)] = set()
-        cset_dict[(iter1, iter2)].add(key)
-        _found = False
-    return _in and _int and not _found
+            _found = False
+        return _in and _int and not _found
 
     check = False
     try:
@@ -198,27 +200,63 @@ def back_substitution(A, x, b):
         return "Could not converge"
 
 class MatrixTests(unittest.TestCase):
-    def setup(self):
-        pass
-    def tearDown(self):
-        pass
     
+    def test_echelon_function_simple(self):
+        A = [[2, 1, 1], 
+             [1, 2, 1],
+             [1, 1, 2]]
+        b = [1, 1, 1]
+        Asol = [
+                [Fraction(1, 1), Fraction(1,2), Fraction(1,2)],
+                [Fraction(0, 1), Fraction(1, 1), Fraction(1,3)],
+                [Fraction(0, 1), Fraction(0,1), Fraction(1,1)]
+        ]
+        bsol = [Fraction(1, 2), Fraction(1, 3), Fraction(1, 4)]
+        self.assertListEqual(Asol, echelon(A, [], b)[0])
+        self.assertListEqual(bsol, echelon(A, [], b)[2])
+    
+    def test_echelon_function_with_sample_problem_matrix(self):
+        A =[[1, 1, 1, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 1, 0, 1, 1], 
+            [0, 1, 1, 1, 0, 1, 0, 0, 0], 
+            [0, 0, 0, 0, 2, 0, 1, 1, 0], 
+            [0, 0, 0, 1, 1, 1, 0, 0, 1], 
+            [0, 1, 1, 0, 0, 0, 1, 0, 1],
+            [2, 0, 1, 0, 0, 0, 0, 1, 0], 
+            [0, 1, 0, 0, 1, 1, 0, 1, 0]]
+        b = [17, 26, 16, 18, 20, 19, 20, 18]
+        x = ["D","F","E","C","H","A","J","G","B"]
+        Asol = [
+            [Fraction(1, 1), Fraction(0, 1), Fraction(1, 2), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(1, 2), Fraction(0, 1)], 
+            [Fraction(0, 1), Fraction(1, 1), Fraction(1, 1), Fraction(1, 1), Fraction(0, 1), Fraction(1, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1)], 
+            [Fraction(0, 1), Fraction(0, 1), Fraction(1, 1), Fraction(1, 1), Fraction(-1, 1), Fraction(0, 1), Fraction(0, 1), Fraction(-1, 1), Fraction(0, 1)],
+            [Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(1, 1), Fraction(1, 1), Fraction(1, 1), Fraction(0, 1), Fraction(0, 1), Fraction(1, 1)], 
+            [Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(1, 1), Fraction(0, 1), Fraction(1, 2), Fraction(1, 2), Fraction(0, 1)], 
+            [Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(1, 1), Fraction(0, 1), Fraction(2, 1), Fraction(-3, 1)], 
+            [Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(1, 1), Fraction(-1, 1), Fraction(4, 1)], 
+            [Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1), Fraction(0, 1)]]
+        bsol = [Fraction(10, 1), Fraction(16, 1), Fraction(-2, 1), Fraction(20, 1), Fraction(9, 1),
+                Fraction(0, 1), Fraction(28, 1), Fraction(0, 1)]
+        res = echelon(A, x, b)
+        self.assertListEqual(res[0], Asol)
+        self.assertListEqual(res[2], bsol)
+
 """
-A = [B  H  F  J  G  D  E  C  A
-    [1, 0, 1, 0, 0, 1, 1, 0, 0], 
-    [1, 0, 0, 0, 1, 1, 0, 0, 1], 
-    [0, 0, 1, 0, 0, 0, 1, 1, 1], 
-    [0, 2, 0, 1, 1, 0, 0, 0, 0], 
-    [1, 1, 0, 0, 0, 0, 0, 1, 1], 
-    [1, 0, 1, 1, 0, 0, 1, 0, 0], 
-    [0, 0, 0, 0, 1, 2, 1, 0, 0], 
-    [0, 1, 1, 0, 1, 0, 0, 0, 1],
-    [1, 2, 1, 0, 1, 0, 0, 1, 2]
-]
+import operator
+from copy import deepcopy
+from fractions import Fraction
+A = [[1, 1, 1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 1, 1], 
+    [0, 1, 1, 1, 0, 1, 0, 0, 0], 
+    [0, 0, 0, 0, 2, 0, 1, 1, 0], 
+    [0, 0, 0, 1, 1, 1, 0, 0, 1], 
+    [0, 1, 1, 0, 0, 0, 1, 0, 1],
+    [2, 0, 1, 0, 0, 0, 0, 1, 0], 
+    [0, 1, 0, 0, 1, 1, 0, 1, 0]]
 b = [17, 26, 16, 18, 20, 19, 20, 18, 38]
 
 #Gaussian eliminations
-def gauss(A, x, b):
+def echelon(A, x, b):
     #reducing to row echelon format
     try:
         n , m = len(A), len(A[0])
@@ -228,11 +266,12 @@ def gauss(A, x, b):
     rows, columns = 0, 0
     while rows < n and columns < m:
         # get the max for certain columns for all rows
-        temp = [A[i][columns] for i in range(rows, n)]
-        big_ind, big_value = max(enumerate(temp), key=operator.itemgetter(1))
+        temp = [abs(A[i][columns]) for i in range(rows, n)]
+        big_ind, big_v = max(enumerate(temp), key=operator.itemgetter(1))
         # big_ind = np.argmax(temp) #found pivot
         # big_value = temp[big_ind]
-        big_ind = big_ind + len(A) - len(temp) 
+        big_ind = big_ind + len(A) - len(temp)
+        big_value = A[big_ind][columns]
         if A[big_ind][columns] == 0:
             #no pivot, skip column
             columns += 1
@@ -264,6 +303,7 @@ def gauss(A, x, b):
                 print(str([float(j) for j in A[i]]), end="\t")
                 print(str(b[i]))
             print("*" * 100)
-gauss(A, [], b)
+echelon(A, [], b)
+
 
 """
