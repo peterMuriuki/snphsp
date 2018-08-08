@@ -139,34 +139,63 @@ def back_substitution(A, x, b):
     d = {}
     for _x in list(x):
         d[_x] = 0
-    while d[x[len(x) -2]] < 10:
-        while d[x[len(x) -1]] < 10:
-            if d[x[len(x) - 2]] != d[x[len(x) - 1]]:
-                for row in range(len(A) - 1, 0, -1):
-                    #find the last pivot: will be the first non zero value in current row
-                    def pivot(A):
-                        for index, value in enumerate(A[row]):
-                            if value != 0:
-                                return value, index
-                        #? what if there does not exist a pivot in this row
-                        return 0, len(A[row])-1
-                    pivvalue, pivindex = pivot(A)
-                    if pivvalue == 0:
-                        continue
-                    total = 0
-                    for i in range(len(x)):
-                        if i != pivindex:
-                            total = A[row][i] * d[x[i]]
-                    temp = (b[pivindex] - total)/pivvalue
-                    if temp > 10:
-                        d[x[len(x) - 1]] += 1
-                        continue
-                    else:
-                        d[x[pivindex]] = temp
-            else:
-                d[x[len(x) - 1]] += 1
-        d[x[len(x) - 2]] += 1
-    return d
+    cset_dict = {} # dict to preserve the state for corr last check
+    
+    def corr(key, iter1, iter2):
+    #key is between 0 and 10 excluding both
+    _in = key < 10 and key > 0
+    if not _in:
+        return False
+    #key is int and not float
+    _int = Fraction(key, 1).denominator == 1
+    if not _int:
+        return False
+    #key is not the same for the current iterations
+    if cset_dict.get((iter1, iter2)) is not None:
+        #means that we have already started recording for this iter
+        _found = key in cset_dict[(iter1, iter2)]
+        if not _found:
+            cset_dict[(iter1, iter2)].add(key)
+    else:
+        cset_dict[(iter1, iter2)] = set()
+        cset_dict[(iter1, iter2)].add(key)
+        _found = False
+    return _in and _int and not _found
+
+    check = False
+    try:
+        for d[x[len(x) -2]] in range(1, 10):
+            for d[x[len(x) -1]] in range(1, 10):
+                if d[x[len(x) - 2]] != d[x[len(x) - 1]]:
+                    for row in range(len(A) - 1, 0, -1):
+                        #find the last pivot: will be the first non zero value in current row
+                        def pivot(A):
+                            """Given a reduced row it will return first non zero"""
+                            for index, value in enumerate(A[row]):
+                                if value != 0:
+                                    return value, index
+                            return 0, len(A[row])-1
+                        pivvalue, pivindex = pivot(A)
+                        if pivvalue == 0:
+                            continue #? what if there does not exist a pivot in this row
+                        total = 0
+                        for i in range(len(x)):
+                            if i != pivindex:
+                                total += A[row][i] * d[x[i]]
+                        temp = (b[pivindex] - total)/pivvalue
+                        if corr(temp, d[x[len(x) -2]], d[x[len(x) -1]]):
+                            d[x[pivindex]] = temp
+                            if pivindex == 0:
+                                check = True
+                                raise StopIterationError("Found our matches")
+                        else:
+                            break
+    except StopIterationError as err:
+        pass
+    if check:
+        return d
+    else:
+        return "Could not converge"
 
 class MatrixTests(unittest.TestCase):
     def setup(self):
