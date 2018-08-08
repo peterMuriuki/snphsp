@@ -73,6 +73,7 @@ def inverse_method(A, x, b):
 
 A, x, b = squarify(translated_matrix, unknownset, solutions)
 
+
 #Gaussian eliminations
 def gauss(A, x, b):
     #reducing to row echelon format
@@ -118,12 +119,11 @@ def gauss(A, x, b):
             rows += 1
             for i in range(len(A)):
                 print(str([float(j) for j in A[i]]), end="\t")
-#                 print(x[i], end="\t")
+                print(x[i], end="\t")
                 print(str(b[i]))
-                print(x)
             print("*" * 100)
 
-gauss(A, [], b)
+gauss(A, x, b)
 def prettify_to_file(A,b):
     with open('sample.txt', 'w') as file:
         for i in range(len(A)):
@@ -142,24 +142,30 @@ def back_substitution(A, x, b):
     while d[x[len(x) -2]] < 10:
         while d[x[len(x) -1]] < 10:
             if d[x[len(x) - 2]] != d[x[len(x) - 1]]:
-                for row in range(len(A) - 1, 0):
+                for row in range(len(A) - 1, 0, -1):
                     #find the last pivot: will be the first non zero value in current row
                     def pivot(A):
-                        for index in enumerate(A[len(A) - 1]):
-                            if val != 0:
+                        for index, value in enumerate(A[row]):
+                            if value != 0:
                                 return value, index
+                        #? what if there does not exist a pivot in this row
+                        return 0, len(A[row])-1
                     pivvalue, pivindex = pivot(A)
+                    if pivvalue == 0:
+                        continue
                     total = 0
                     for i in range(len(x)):
                         if i != pivindex:
                             total = A[row][i] * d[x[i]]
                     temp = (b[pivindex] - total)/pivvalue
                     if temp > 10:
-                        d[x[len[x] - 1]] += 1
+                        d[x[len(x) - 1]] += 1
                         continue
                     else:
                         d[x[pivindex]] = temp
-        d[x[len[x] - 2]] += 1
+            else:
+                d[x[len(x) - 1]] += 1
+        d[x[len(x) - 2]] += 1
     return d
 
 class MatrixTests(unittest.TestCase):
@@ -169,7 +175,7 @@ class MatrixTests(unittest.TestCase):
         pass
     
 """
-A = [   
+A = [B  H  F  J  G  D  E  C  A
     [1, 0, 1, 0, 0, 1, 1, 0, 0], 
     [1, 0, 0, 0, 1, 1, 0, 0, 1], 
     [0, 0, 1, 0, 0, 0, 1, 1, 1], 
