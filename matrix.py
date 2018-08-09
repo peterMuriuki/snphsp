@@ -17,7 +17,7 @@ E + B + F + J = 19
 D + D + E + G = 20
 F + G + A + H = 18
 """
-import unittest, random
+import unittest, random, re
 try:
     import numpy as np
 except ImportError:
@@ -78,8 +78,6 @@ def inverse_method(A, x, b):
         print(err.message) #usually singular matrix not invertible
     return A, x, b
 
-A, x, b = squarify(translated_matrix, unknownset, solutions)
-
 
 #Gaussian eliminations
 def echelon(A, x, b):
@@ -128,8 +126,6 @@ def echelon(A, x, b):
             columns += 1
             rows += 1
     return A, x, b
-
-echelon(A, x, b)
 
 def back_substitution(A, x, b):
     """Back substitution"""
@@ -192,11 +188,11 @@ def back_substitution(A, x, b):
     except StopIteration as err:
         pass
     if check:
-        return d
+        return {key: int(value) for key, value in d.items()}
     else:
         return "Could not converge, no values of unknowns found within range(1,10)"
     
-def validate(_input):
+def validates(_input):
     """format :E + B + F + J = 19"""
     #^\S{1}\s*[+]\s*\S{1}\s*[+]\s*\S{1}\s*[+]\s*\S{1}\s*=\s*\d+\s*$
     pattern = r'^\s*\S{1}\s*[+]\s*\S{1}\s*[+]\s*\S{1}\s*[+]\s*\S{1}\s*=\s*\d+\s*$'
@@ -209,29 +205,28 @@ def separate(_input):
     temp = _input.split("=")
     return [char.strip() for char in temp]
 
-def input():
+def run():
     """defines the input data structure and form"""
     # am thinking using the command line and filling each linear system in a linear line
     eqstring, solutions = [], []
-    print("type in the equations below: sample: E + B + F + J = 19")
-    eqstring = []
+    print("type in the equations below: sample: E + B + F + J = 19(q/quit)")
     for i in range(1,9):
         while True:
-            uinput = input("#{}. eq:".format(i))
+            uinput = input("eq. #{} : ".format(str(i)))
             if validates(uinput):
-                res = separate(uinput)[0]
+                res = separate(uinput)
                 eqstring.append(res[0])
                 solutions.append(res[1])
                 break
             else:
-                print("seems like something went wrong, please retype that:")
+                print("seems like something went wrong, please retype that(q/quit):")
     #here should have A, x, and b
     return eqstring, solutions
             
 if __name__ == '__main__':
     while True:
         try:
-            eqstring, solutions = input() #put in while loop
+            eqstring, solutions = run() #put in while loop
             A, x, b = translate(eqstring, solutions)
             A, x, b = echelon(A,x,b)
             d = back_substitution(A,x,b)
@@ -244,6 +239,55 @@ if __name__ == '__main__':
             else:
                 raise(error)
 
+class SecondaryTests(unittest.TestCase):
+    
+    def test_validates_function_for_valid_data(self):
+        sample1 = "E + B + F + J = 19"
+        sample2 = " E  +  B  +  F  +  J =  19 "
+        sample3 = "E + b + F + j = 19"
+        sample4 = "e + b + f + j = 19"
+        self.assertTrue(validates(sample1))
+        self.assertTrue(validates(sample2))
+        self.assertTrue(validates(sample3))
+        self.assertTrue(validates(sample4))
+    
+    def test_validate_function_at_stop(self):
+        with self.assertRaises(Exception):
+            validates("q")
+            validates("quit")
+            validates("Quit")
+            validates("qUiT")
+            validates("QUIT")
+    
+    def test_validate_function_for_invalid_data(self):
+        sample1 = "E B + F + J = 19"
+        sample2 = "E + B + F + J  19"
+        sample3 = "E + B + F + J = D"
+        sample4 = "E + B + F = 19"
+        self.assertFalse(validates(sample1))
+        self.assertFalse(validates(sample2))
+        self.assertFalse(validates(sample3))
+        self.assertFalse(validates(sample4))
+        
+    def test_separate_function_for_valid(self):
+        sample = "E + B + F + J = 19"
+        res = separate(sample)
+        self.assertListEqual(res, ["E + B + F + J", "19"])
+        
+    def test_translate_function(self):
+        eqstring = ["B + E + D + F","A +B + D + G ","C + F + E + A", "H + J + G + H",
+                    "B + A + C + H","E + B + F + J ","D + D + E + G", "F + G + A + H"]
+        solutions = [17, 26, 16, 18, 20, 19, 20, 18]
+        eqsol = [" 17"," 26"," 16"," 18"," 20"," 19"," 20"," 18"]
+        res = translate(eqstring, eqsol)
+        import random
+        self.assertIsInstance(res[random.randint(0, 2)], list)
+        self.assertIsInstance(res[2][random.randint(0, 6)], int)
+        self.assertEqual(len(res[0]), 8)
+        self.assertEqual(len(res[0][random.randint(0, 5)]), 9)
+        self.assertListEqual(res[2], solutions)
+        self.assertEqual(len(res[1]), 9)
+        
 class MatrixTests(unittest.TestCase):
     
     def test_echelon_function_simple(self):
