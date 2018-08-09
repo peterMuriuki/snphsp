@@ -1,10 +1,13 @@
 """The goal here is to create an implementation of 
     1. inverse_method
-    2. the gauss elimination algorithm
+    2. the gauss elimination algorithm: 
+        reducing a matrix to row echelon form
+        performing back substitution on the returned row echelon matrix
 for finding unkowns in a system of linear equations
 
 The solution will then hence forth be used to solve the solvit problem that happens 
 in the leisure page of the standard newspaper
+:sample:
 B + E + D + F = 17
 A + B + D + G = 26
 C + f + E + A = 16
@@ -21,22 +24,23 @@ from copy import deepcopy
 from fractions import Fraction
 import unittest
 
-eqstring = ["B + E + D + F","A +B + D + G ","C + F + E + A",
-            "H + J + G + H","B + A + C + H","E + B + F + J ","D + D + E + G", "F + G + A + H"]
-solutions = [17, 26, 16, 18, 20, 19, 20, 18]
-eqlist = [map(str.strip, char.split("+")) for char in eqstring]
-temp = []
-for charlist in eqlist:
-    temp.extend(charlist)
-unknownset = set(temp)
+def translate(eqstring, solutions):
+    solutions = [int(i) for i in solutions]
+    eqstring = [char.upper() for char in eqstring]
+    eqlist = [map(str.strip, char.split("+")) for char in eqstring]
+    temp = []
+    for charlist in eqlist:
+        temp.extend(charlist)
+    unknownset = set(temp)
 
-#issue 1: the system does not translate to a square matrix
-translated_matrix  = []
-for string in eqstring:
-    coeff = []
-    for unknown in unknownset:
-        coeff.append(string.count(unknown))
-    translated_matrix.append(coeff)
+    #issue 1: the system does not translate to a square matrix
+    translated_matrix  = []
+    for string in eqstring:
+        coeff = []
+        for unknown in unknownset:
+            coeff.append(string.count(unknown))
+        translated_matrix.append(coeff)
+    return translated_matrix, list(unknownset), solutions
 
 
 def add_list(list1, list2):
@@ -184,7 +188,55 @@ def back_substitution(A, x, b):
     if check:
         return d
     else:
-        return "Could not converge"
+        return "Could not converge, no values of unknowns found within range(1,10)"
+    
+def validate(_input):
+    """format :E + B + F + J = 19"""
+    #^\S{1}\s*[+]\s*\S{1}\s*[+]\s*\S{1}\s*[+]\s*\S{1}\s*=\s*\d+\s*$
+    pattern = r'^\s*\S{1}\s*[+]\s*\S{1}\s*[+]\s*\S{1}\s*[+]\s*\S{1}\s*=\s*\d+\s*$'
+    if _input.lower() == "quit" or _input.lower() == "q":
+        raise  Exception("Program stopping")
+    return re.search(pattern, _input)
+    
+def separate(_input):
+    """sample input = :E + B + F + J = 19"""
+    temp = _input.split("=")
+    return [char.strip() for char in temp]
+
+def input():
+    """defines the input data structure and form"""
+    # am thinking using the command line and filling each linear system in a linear line
+    eqstring, solutions = [], []
+    print("type in the equations below: sample: E + B + F + J = 19")
+    eqstring = []
+    for i in range(1,9):
+        while True:
+            uinput = input("#{}. eq:".format(i))
+            if validates(uinput):
+                res = separate(uinput)[0]
+                eqstring.append(res[0])
+                solutions.append(res[1])
+                break
+            else:
+                print("seems like something went wrong, please retype that:")
+    #here should have A, x, and b
+    return eqstring, solutions
+            
+if __name__ == '__main__':
+    while True:
+        try:
+            eqstring, solutions = input() #put in while loop
+            A, x, b = translate(eqstring, solutions)
+            A, x, b = echelon(A,x,b)
+            d = back_substitution(A,x,b)
+            print(d)
+            #the end
+        except Exception as error:
+            if error.args[0] == "Program stopping":
+                print(error)
+                break
+            else:
+                raise(error)
 
 class MatrixTests(unittest.TestCase):
     
