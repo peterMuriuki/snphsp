@@ -18,7 +18,10 @@ D + D + E + G = 20
 F + G + A + H = 18
 """
 import unittest, random
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    import operator
 import numpy.matlib as mt
 from copy import deepcopy
 from fractions import Fraction
@@ -91,7 +94,10 @@ def echelon(A, x, b):
     while rows < n and columns < m:
         # get the max for certain columns for all rows
         temp = [abs(A[i][columns]) for i in range(rows, n)]
-        big_ind = np.argmax(temp) #found pivot
+        try:
+            big_ind = np.argmax(temp) #found pivot
+        except NameError:
+            big_ind, max_val = max(enumerate(temp), key=operator.itemgetter(1))
         big_ind = big_ind + len(A) - len(temp)
         big_value = A[big_ind][columns]
         if A[big_ind][columns] == 0:
