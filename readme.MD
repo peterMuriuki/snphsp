@@ -13,12 +13,13 @@ create virtualenv
 ##### (A sample problem, sample input, sample output)
 ### Sample Problem
 
---|--|--|--
-D|G|E|T|22
-B|A|H|D|23
-E|C|G|C|14
-H|J|F|A|22
-16|26|11|28
+| -- | -- | -- | -- | -- |
+| -- | -- | -- | -- | -- |
+| D | G | E | T | 22 |
+| B | A | H | D | 23 |
+| E | C | G | C | 14 |
+| H | J | F | A | 22 |
+| 16 | 26 | 11 | 28 |
 
 ### Sample Input
 ```
